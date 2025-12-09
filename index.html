@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEON HABIT LEGEND</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f0a;
+      --card: #111111;
+      --neon: #00ff88;
+      --neon-glow: 0 0 20px #00ff88;
+      --text: #e0ffe8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0,255,136,0.1) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(0,255,136,0.08) 0%, transparent 20%);
+      padding: 20px;
+    }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 4rem;
+      text-align: center;
+      background: linear-gradient(90deg, #00ff88, #00cc66);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 40px rgba(0,255,136,0.6);
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      opacity: 0.8;
+      font-size: 1.2rem;
+      margin-bottom: 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 30px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid #00ff8830;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: var(--neon-glow), inset 0 0 20px rgba(0,255,136,0.05);
+      backdrop-filter: blur(10px);
+    }
+    .glow-btn {
+      background: transparent;
+      border: 2px solid var(--neon);
+      color: var(--neon);
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-family: 'Orbitron';
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.4s;
+      box-shadow: var(--neon-glow);
+    }
+    .glow-btn:hover {
+      background: var(--neon);
+      color: black;
+      transform: translateY(-5px);
+      box-shadow: 0 0 40px var(--neon);
+    }
+    .habit-card {
+      background: #151515;
+      border: 2px solid transparent;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: all 0.4s;
+      box-shadow: 0 0 15px transparent;
+    }
+    .habit-card:hover {
+      border-color: var(--neon);
+      box-shadow: var(--neon-glow);
+      transform: translateY(-8px);
+    }
+    .streak-counter {
+      font-size: 3rem;
+      color: var(--neon);
+      text-shadow: var(--neon-glow);
+      text-align: center;
+      margin: 20px 0;
+    }
+    .progress-bar {
+      height: 20px;
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+      border: 1px solid var(--neon);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff88, #00cc66);
+      width: 0%;
+      transition: width 1s ease;
+      box-shadow: var(--neon-glow);
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      font-weight: bold;
+      transition: all 0.3s;
+      background: #1a1a1a;
+    }
+    .day.completed {
+      background: var(--neon);
+      color: black;
+      box-shadow: var(--neon-glow);
+      animation: pulse 2s infinite;
+    }
+    .day.today {
+      border: 2px solid var(--neon);
+      box-shadow: 0 0 20px var(--neon);
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .badge {
+      background: #003322;
+      color: var(--neon);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      border: 1px solid var(--neon);
+      box-shadow: var(--neon-glow);
+    }
+    select, input {
+      background: #111;
+      border: 2px solid #00ff8850;
+      color: white;
+      padding: 14px;
+      border-radius: 12px;
+      width: 100%;
+      margin: 10px 0;
+      font-family: 'Orbitron';
+    }
+    .add-section {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 15px #00ff8866; }
+      50% { box-shadow: 0 0 35px #00ff88; }
+    }
+    @media (max-width: 968px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 2.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>NEON HABIT LEGEND</h1>
+    <p class="subtitle">Level Up Your Life • Earn XP • Become Legendary</p>
+
+    <div class="grid">
+      <!-- Main Habits -->
+      <div>
+        <div class="card">
+          <h2 style="color:var(--neon); margin-bottom:20px;">YOUR HABITS</h2>
+          <div class="add-section">
+            <input type="text" id="habitName" placeholder="New habit name..." />
+            <select id="category">
+              <option value="Fitness">Fitness</option>
+              <option value="Learning">Learning</option>
+              <option value="Finance">Finance</option>
+              <option value="Mindfulness">Mindfulness</option>
+            </select>
+            <button class="glow-btn" onclick="addHabit()">+ ADD</button>
+          </div>
+
+          <div id="habitsList"></div>
+        </div>
+
+        <div class="card" style="margin-top:30px;">
+          <h2 style="color:var(--neon);">LEVEL & PROGRESS</h2>
+          <div style="text-align:center;">
+            <div style="font-size:2.5rem; color:var(--neon);" id="level">Rookie</div>
+            <div style="font-size:1.5rem;" id="xp">0 XP</div>
+            <div class="progress-bar"><div class="progress" id="progress"></div></div>
+            <div id="nextLevelText">Next: Warrior (100 XP)</div>
+          </div>
+
+          <h3 style="margin:30px 0 15px; color:var(--neon);">BADGES EARNED</h3>
+          <div class="badges" id="badges"></div>
+        </div>
+      </div>
+
+      <!-- Calendar & Streak -->
+      <div>
+        <div class="card">
+          <h2 style="color:var(--neon);">CURRENT STREAK</h2>
+          <div class="streak-counter" id="streak">0</div>
+
+          <select id="habitSelect" onchange="loadCalendar()"></select>
+
+          <div style="margin:20px 0; text-align:center;">
+            <button class="glow-btn" onclick="prevMonth()">←</button>
+            <span style="margin:0 20px; font-size:1.4rem;" id="monthYear"></span>
+            <button class="glow-btn" onclick="nextMonth()">→</button>
+          </div>
+
+          <div class="calendar-grid" id="calendar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwN80WQEwX0fE2-SEhMWFpxsND__cLB5XCMN86x8pMlMvlJFiHR2lGDQjmEAztlnBaG/exec'; // ← REPLACE THIS!
+
+    let habits = [];
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let selectedHabitId = null;
+
+    const categories = {
+      'Fitness': 'Fitness',
+      'Learning': 'Learning',
+      'Finance': 'Finance',
+      'Mindfulness': 'Mindfulness'
+    };
+
+    async function loadHabits() {
+      const res = await fetch(`${WEB_APP_URL}?action=get`);
+      const json = await res.json();
+      habits = json.data || [];
+      renderHabits();
+      updateStats();
+      updateHabitSelect();
+      loadCalendar();
+    }
+
+    function renderHabits() {
+      const list = document.getElementById('habitsList');
+      if (habits.length === 0) {
+        list.innerHTML = `<p style="text-align:center;opacity:0.6;">No habits yet. Add one to begin your legend.</p>`;
+        return;
+      }
+      list.innerHTML = habits.map(h => {
+        const streak = h.streak || 0;
+        return `
+          <div class="habit-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <h3>${categories[h.category] || 'Other'} ${h.icon || ''} ${h.habit_name}</h3>
+                <p>Streak: <strong style="color:var(--neon);">${streak}</strong> days • ${h.xp || 0} XP</p>
+              </div>
+              <div>
+                <button class="glow-btn" onclick="completeToday('${h.habit_name}')">Complete Today</button>
+                <button style="margin-left:10px; background:#330011; border-color:#ff3366;" class="glow-btn" onclick="deleteHabit('${h.habit_name}')">Delete</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function addHabit() {
+      const name = document.getElementById('habitName').value.trim();
+      const category = document.getElementById('category').value;
+      if (!name) return alert('Enter habit name');
+      
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'add', name, category, icon: categories[category]})
+      });
+      document.getElementById('habitName').value = '';
+      loadHabits();
+    }
+
+    async function completeToday(id) {
+      const today = new Date().toISOString().split('T')[0];
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({action: 'complete', id, date: today})
+      });
+      loadHabits();
+    }
+
+    async function deleteHabit(id) {
+      if (!confirm('Delete this habit forever?')) return;
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({action: 'delete', id})
+      });
+      loadHabits();
+    }
+
+    function updateStats() {
+      let totalXP = habits.reduce((sum, h) => sum + (h.xp || 0), 0);
+      let maxStreak = Math.max(...habits.map(h => h.streak || 0), 0);
+      let level = habits[0]?.level || 'Rookie';
+
+      document.getElementById('streak').textContent = maxStreak + ' 🔥';
+      document.getElementById('level').textContent = level;
+      document.getElementById('xp').textContent = totalXP + ' XP';
+
+      const levels = ['Rookie', 'Warrior','Elite','Master','Legend'];
+      const nextIdx = levels.indexOf(level) + 1;
+      const nextXP = [100,500,1500,3000,999999][nextIdx-1] || 999999;
+      const prevXP = [0,100,500,1500,3000][nextIdx-1] || 0;
+      const progress = Math.min(100, ((totalXP - prevXP) / (nextXP - prevXP)) * 100);
+      document.getElementById('progress').style.width = progress + '%';
+      document.getElementById('nextLevelText').textContent = nextIdx < levels.length ? `Next: ${levels[nextIdx]} (${nextXP} XP)` : 'MAX LEVEL ACHIEVED';
+
+      // Badges
+      const allBadges = habits.flatMap(h => JSON.parse(h.badges || '[]'));
+      const unique = [...new Set(allBadges)];
+      document.getElementById('badges').innerHTML = unique.map(b => `<div class="badge">${b}</div>`).join('');
+    }
+
+    function updateHabitSelect() {
+      const select = document.getElementById('habitSelect');
+      select.innerHTML = '<option value="">Select habit for calendar...</option>';
+      habits.forEach(h => {
+        select.innerHTML += `<option value="${h.habit_name}">${categories[h.category] || ''} ${h.habit_name}</option>`;
+      });
+    }
+
+    function loadCalendar() {
+      selectedHabitId = document.getElementById('habitSelect').value;
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const monthYear = document.getElementById('monthYear');
+      monthYear.textContent = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+      const grid = document.getElementById('calendar');
+      grid.innerHTML = '';
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      // Convert JS getDay() (0=Sun..6=Sat) to Monday-first offset (0=Mon..6=Sun)
+      const emptyOffset = (firstDay + 6) % 7;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      // Headers
+      ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
+        const el = document.createElement('div');
+        el.textContent = d;
+        el.style.fontSize = '0.8rem';
+        el.style.opacity = '0.6';
+        grid.appendChild(el);
+      });
+
+      // Empty cells
+      for (let i = 0; i < emptyOffset; i++) {
+        grid.appendChild(document.createElement('div'));
+      }
+
+      const habit = habits.find(h => h.habit_name === selectedHabitId);
+      const completed = habit ? JSON.parse(habit.completed_dates || '[]') : [];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dateStr = date.toISOString().split('T')[0];
+        const div = document.createElement('div');
+        div.className = 'day';
+        div.textContent = day;
+
+        if (completed.includes(dateStr)) div.classList.add('completed');
+        if (date.getTime() === today.getTime()) div.classList.add('today');
+
+        div.onclick = () => {
+          if (selectedHabitId) completeDate(selectedHabitId, dateStr);
+        };
+        grid.appendChild(div);
+      }
+    }
+
+    async function completeDate(id, dateStr) {
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({action: 'complete', id, date: dateStr})
+      });
+      loadHabits();
+    }
+
+    function prevMonth() { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(); }
+    function nextMonth() { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(); }
+
+    // Init
+    loadHabits();
+    setInterval(loadHabits, 10000); // Auto-refresh every 10s
+  </script>
+</body>
+</html>
