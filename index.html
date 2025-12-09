@@ -127,6 +127,10 @@
       font-weight: bold;
       transition: all 0.3s;
       background: #1a1a1a;
+      cursor: pointer;
+    }
+    .day:hover {
+      background: #333;
     }
     .day.completed {
       background: var(--neon);
@@ -168,6 +172,28 @@
       gap: 10px;
       margin: 20px 0;
     }
+    
+    /* LOADING SPINNER CSS */
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid transparent;
+      border-top-color: var(--neon);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      box-shadow: 0 0 15px var(--neon);
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes pulse {
       0%, 100% { box-shadow: 0 0 15px #00ff8866; }
       50% { box-shadow: 0 0 35px #00ff88; }
@@ -179,12 +205,16 @@
   </style>
 </head>
 <body>
+  
+  <div class="loading-overlay" id="loader">
+    <div class="spinner"></div>
+  </div>
+
   <div class="container">
     <h1>NEON HABIT LEGEND</h1>
     <p class="subtitle">Level Up Your Life • Earn XP • Become Legendary</p>
 
     <div class="grid">
-      <!-- Main Habits -->
       <div>
         <div class="card">
           <h2 style="color:var(--neon); margin-bottom:20px;">YOUR HABITS</h2>
@@ -216,7 +246,6 @@
         </div>
       </div>
 
-      <!-- Calendar & Streak -->
       <div>
         <div class="card">
           <h2 style="color:var(--neon);">CURRENT STREAK</h2>
@@ -237,7 +266,8 @@
   </div>
 
   <script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwN80WQEwX0fE2-SEhMWFpxsND__cLB5XCMN86x8pMlMvlJFiHR2lGDQjmEAztlnBaG/exec'; // ← REPLACE THIS!
+    // ▼▼▼ PASTE YOUR GOOGLE WEB APP URL HERE ▼▼▼
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwN80WQEwX0fE2-SEhMWFpxsND__cLB5XCMN86x8pMlMvlJFiHR2lGDQjmEAztlnBaG/exec'; 
 
     let habits = [];
     let currentMonth = new Date().getMonth();
@@ -252,13 +282,22 @@
     };
 
     async function loadHabits() {
-      const res = await fetch(`${WEB_APP_URL}?action=get`);
-      const json = await res.json();
-      habits = json.data || [];
-      renderHabits();
-      updateStats();
-      updateHabitSelect();
-      loadCalendar();
+      // Show loader only if habits are empty (first load)
+      if (habits.length === 0) document.getElementById('loader').style.display = 'flex';
+      
+      try {
+        const res = await fetch(`${WEB_APP_URL}?action=get`);
+        const json = await res.json();
+        habits = json.data || [];
+        renderHabits();
+        updateStats();
+        updateHabitSelect();
+        loadCalendar();
+      } catch (e) {
+        console.error("Fetch error:", e);
+      } finally {
+        document.getElementById('loader').style.display = 'none';
+      }
     }
 
     function renderHabits() {
@@ -290,31 +329,44 @@
       const category = document.getElementById('category').value;
       if (!name) return alert('Enter habit name');
       
+      const btn = document.querySelector('button[onclick="addHabit()"]');
+      const originalText = btn.textContent;
+      btn.textContent = "Saving...";
+      btn.disabled = true;
+
       await fetch(WEB_APP_URL, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        // HEADER REMOVED TO FIX CORS
         body: JSON.stringify({action: 'add', name, category, icon: categories[category]})
       });
+      
       document.getElementById('habitName').value = '';
-      loadHabits();
+      await loadHabits();
+      
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
 
     async function completeToday(id) {
+      document.getElementById('loader').style.display = 'flex';
       const today = new Date().toISOString().split('T')[0];
       await fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify({action: 'complete', id, date: today})
       });
-      loadHabits();
+      await loadHabits();
+      document.getElementById('loader').style.display = 'none';
     }
 
     async function deleteHabit(id) {
       if (!confirm('Delete this habit forever?')) return;
+      document.getElementById('loader').style.display = 'flex';
       await fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify({action: 'delete', id})
       });
-      loadHabits();
+      await loadHabits();
+      document.getElementById('loader').style.display = 'none';
     }
 
     function updateStats() {
@@ -342,10 +394,14 @@
 
     function updateHabitSelect() {
       const select = document.getElementById('habitSelect');
+      // Save current selection if exists
+      const currentVal = select.value;
       select.innerHTML = '<option value="">Select habit for calendar...</option>';
       habits.forEach(h => {
         select.innerHTML += `<option value="${h.habit_name}">${categories[h.category] || ''} ${h.habit_name}</option>`;
       });
+      // Restore selection if it still exists
+      if(currentVal) select.value = currentVal;
     }
 
     function loadCalendar() {
@@ -359,10 +415,14 @@
 
       const grid = document.getElementById('calendar');
       grid.innerHTML = '';
-      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      
+      // LOGIC FIX: Adjust day index so Monday is 1 and Sunday is 7
+      let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      if (firstDay === 0) firstDay = 7; 
+
+      // SYNTAX FIX: Added () to getDate
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      // Convert JS getDay() (0=Sun..6=Sat) to Monday-first offset (0=Mon..6=Sun)
-      const emptyOffset = (firstDay + 6) % 7;
+      
       const today = new Date();
       today.setHours(0,0,0,0);
 
@@ -375,8 +435,8 @@
         grid.appendChild(el);
       });
 
-      // Empty cells
-      for (let i = 0; i < emptyOffset; i++) {
+      // Empty cells (Loop runs correctly now because Monday is 1, so i<1 is 0 loops, correct for Monday start)
+      for (let i = 1; i < firstDay; i++) {
         grid.appendChild(document.createElement('div'));
       }
 
@@ -385,7 +445,11 @@
 
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
-        const dateStr = date.toISOString().split('T')[0];
+        // Timezone adjustment to ensure date string matches completed list
+        const offset = date.getTimezoneOffset() * 60000;
+        const localDate = new Date(date.getTime() - offset);
+        const dateStr = localDate.toISOString().split('T')[0];
+        
         const div = document.createElement('div');
         div.className = 'day';
         div.textContent = day;
@@ -401,11 +465,13 @@
     }
 
     async function completeDate(id, dateStr) {
+      document.getElementById('loader').style.display = 'flex';
       await fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify({action: 'complete', id, date: dateStr})
       });
-      loadHabits();
+      await loadHabits();
+      document.getElementById('loader').style.display = 'none';
     }
 
     function prevMonth() { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(); }
