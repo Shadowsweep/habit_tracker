@@ -127,7 +127,6 @@
       font-weight: bold;
       transition: all 0.3s;
       background: #1a1a1a;
-      cursor: pointer;
     }
     .day.completed {
       background: var(--neon);
@@ -181,7 +180,7 @@
 </head>
 <body>
   <div class="container">
-    <h1> HABIT LEGEND</h1>
+    <h1>NEON HABIT LEGEND</h1>
     <p class="subtitle">Level Up Your Life • Earn XP • Become Legendary</p>
 
     <div class="grid">
@@ -192,10 +191,10 @@
           <div class="add-section">
             <input type="text" id="habitName" placeholder="New habit name..." />
             <select id="category">
-              <option value="Fitness">💪 Fitness</option>
-              <option value="Learning">📚 Learning</option>
-              <option value="Finance">💰 Finance</option>
-              <option value="Mindfulness">🧘 Mindfulness</option>
+              <option value="Fitness">Fitness</option>
+              <option value="Learning">Learning</option>
+              <option value="Finance">Finance</option>
+              <option value="Mindfulness">Mindfulness</option>
             </select>
             <button class="glow-btn" onclick="addHabit()">+ ADD</button>
           </div>
@@ -223,9 +222,7 @@
           <h2 style="color:var(--neon);">CURRENT STREAK</h2>
           <div class="streak-counter" id="streak">0</div>
 
-          <select id="habitSelect" onchange="loadCalendar()">
-            <option value="">Select habit for calendar...</option>
-          </select>
+          <select id="habitSelect" onchange="loadCalendar()"></select>
 
           <div style="margin:20px 0; text-align:center;">
             <button class="glow-btn" onclick="prevMonth()">←</button>
@@ -240,53 +237,23 @@
   </div>
 
   <script>
-    // ⚠️ REPLACE THIS WITH YOUR WEB APP URL! ⚠️
-    const WEB_APP_URL = 'YOUR_WEB_APP_URL_HERE';
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwN80WQEwX0fE2-SEhMWFpxsND__cLB5XCMN86x8pMlMvlJFiHR2lGDQjmEAztlnBaG/exec'; // ← REPLACE THIS!
 
     let habits = [];
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
     let selectedHabitId = null;
 
-    const categoryIcons = {
-      'Fitness': '💪',
-      'Learning': '📚',
-      'Finance': '💰',
-      'Mindfulness': '🧘'
+    const categories = {
+      'Fitness': 'Fitness',
+      'Learning': 'Learning',
+      'Finance': 'Finance',
+      'Mindfulness': 'Mindfulness'
     };
 
-    // FIXED: Proper POST request with URL-encoded form data
-    async function makeRequest(action, data = {}) {
-      try {
-        if (action === 'get') {
-          const res = await fetch(`${WEB_APP_URL}?action=get`);
-          return await res.json();
-        } else {
-          // For POST requests, use URLSearchParams
-          const formData = new URLSearchParams();
-          formData.append('action', action);
-          Object.keys(data).forEach(key => {
-            formData.append(key, data[key]);
-          });
-
-          const res = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            body: formData
-          });
-          return await res.json();
-        }
-      } catch (err) {
-        console.error('Request error:', err);
-        return { error: err.message };
-      }
-    }
-
     async function loadHabits() {
-      const json = await makeRequest('get');
-      if (json.error) {
-        console.error('Error loading habits:', json.error);
-        return;
-      }
+      const res = await fetch(`${WEB_APP_URL}?action=get`);
+      const json = await res.json();
       habits = json.data || [];
       renderHabits();
       updateStats();
@@ -302,17 +269,16 @@
       }
       list.innerHTML = habits.map(h => {
         const streak = h.streak || 0;
-        const icon = categoryIcons[h.category] || '⭐';
         return `
           <div class="habit-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div>
-                <h3>${icon} ${h.habit_name}</h3>
-                <p style="opacity:0.8;">${h.category || 'Other'} • Streak: <strong style="color:var(--neon);">${streak}</strong> days • ${h.xp || 0} XP</p>
+                <h3>${categories[h.category] || 'Other'} ${h.icon || ''} ${h.habit_name}</h3>
+                <p>Streak: <strong style="color:var(--neon);">${streak}</strong> days • ${h.xp || 0} XP</p>
               </div>
-              <div style="display:flex; gap:10px;">
-                <button class="glow-btn" onclick="completeToday('${h.habit_name}')">✓ Complete</button>
-                <button style="background:#330011; border-color:#ff3366;" class="glow-btn" onclick="deleteHabit('${h.habit_name}')">✕</button>
+              <div>
+                <button class="glow-btn" onclick="completeToday('${h.habit_name}')">Complete Today</button>
+                <button style="margin-left:10px; background:#330011; border-color:#ff3366;" class="glow-btn" onclick="deleteHabit('${h.habit_name}')">Delete</button>
               </div>
             </div>
           </div>`;
@@ -324,39 +290,30 @@
       const category = document.getElementById('category').value;
       if (!name) return alert('Enter habit name');
       
-      const icon = categoryIcons[category] || '⭐';
-      const result = await makeRequest('add', { name, category, icon });
-      
-      if (result.error) {
-        alert('Error: ' + result.error);
-        return;
-      }
-      
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'add', name, category, icon: categories[category]})
+      });
       document.getElementById('habitName').value = '';
       loadHabits();
     }
 
     async function completeToday(id) {
       const today = new Date().toISOString().split('T')[0];
-      const result = await makeRequest('complete', { id, date: today });
-      
-      if (result.error) {
-        alert('Error: ' + result.error);
-        return;
-      }
-      
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({action: 'complete', id, date: today})
+      });
       loadHabits();
     }
 
     async function deleteHabit(id) {
       if (!confirm('Delete this habit forever?')) return;
-      const result = await makeRequest('delete', { id });
-      
-      if (result.error) {
-        alert('Error: ' + result.error);
-        return;
-      }
-      
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({action: 'delete', id})
+      });
       loadHabits();
     }
 
@@ -378,25 +335,16 @@
       document.getElementById('nextLevelText').textContent = nextIdx < levels.length ? `Next: ${levels[nextIdx]} (${nextXP} XP)` : 'MAX LEVEL ACHIEVED';
 
       // Badges
-      const allBadges = habits.flatMap(h => {
-        try {
-          return JSON.parse(h.badges || '[]');
-        } catch {
-          return [];
-        }
-      });
+      const allBadges = habits.flatMap(h => JSON.parse(h.badges || '[]'));
       const unique = [...new Set(allBadges)];
-      document.getElementById('badges').innerHTML = unique.length > 0 
-        ? unique.map(b => `<div class="badge">${b}</div>`).join('')
-        : '<p style="opacity:0.6;">Complete habits to earn badges!</p>';
+      document.getElementById('badges').innerHTML = unique.map(b => `<div class="badge">${b}</div>`).join('');
     }
 
     function updateHabitSelect() {
       const select = document.getElementById('habitSelect');
       select.innerHTML = '<option value="">Select habit for calendar...</option>';
       habits.forEach(h => {
-        const icon = categoryIcons[h.category] || '⭐';
-        select.innerHTML += `<option value="${h.habit_name}">${icon} ${h.habit_name}</option>`;
+        select.innerHTML += `<option value="${h.habit_name}">${categories[h.category] || ''} ${h.habit_name}</option>`;
       });
     }
 
@@ -413,6 +361,7 @@
       grid.innerHTML = '';
       const firstDay = new Date(currentYear, currentMonth, 1).getDay();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      // Convert JS getDay() (0=Sun..6=Sat) to Monday-first offset (0=Mon..6=Sun)
       const emptyOffset = (firstDay + 6) % 7;
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -452,39 +401,19 @@
     }
 
     async function completeDate(id, dateStr) {
-      const result = await makeRequest('complete', { id, date: dateStr });
-      if (result.error) {
-        alert('Error: ' + result.error);
-        return;
-      }
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({action: 'complete', id, date: dateStr})
+      });
       loadHabits();
     }
 
-    function prevMonth() { 
-      currentMonth--; 
-      if(currentMonth<0){
-        currentMonth=11; 
-        currentYear--;
-      } 
-      renderCalendar(); 
-    }
-    
-    function nextMonth() { 
-      currentMonth++; 
-      if(currentMonth>11){
-        currentMonth=0; 
-        currentYear++;
-      } 
-      renderCalendar(); 
-    }
+    function prevMonth() { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(); }
+    function nextMonth() { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(); }
 
-    // Initialize
-    if (WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
-      alert('⚠️ Please set your WEB_APP_URL in the code first!');
-    } else {
-      loadHabits();
-      setInterval(loadHabits, 30000); // Auto-refresh every 30s
-    }
+    // Init
+    loadHabits();
+    setInterval(loadHabits, 10000); // Auto-refresh every 10s
   </script>
 </body>
 </html>
